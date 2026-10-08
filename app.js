@@ -398,41 +398,25 @@
     render();
   }
 
-  /* ---------- Toolbox: filter by area, highlight by company ---------- */
-  // The area tabs filter; the company control only highlights, so no chip, tab or
-  // group ever moves when a company is picked.
+  /* ---------- Toolbox: highlight by company ---------- */
+  // Highlights instead of filtering, so no chip or group ever moves.
   const tb = $('#toolbox');
   const tbGrid = $('.tb', tb);
-  const tbStatus = $('.tb-status', tb);
+  const tbCount = $('.tb-count', tb);
   const companyOf = Object.fromEntries(data.jobs.map(j => [j.id, j.company]));
-  let tbCat = '', tbCo = '';
-  function applyToolbox() {
-    $$('.tb-cats .seg-btn', tb).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cat === tbCat)));
-    $$('.tb-co', tb).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.co === tbCo)));
-    tbGrid.className = `tb${tbCo ? ` picking c-${tbCo}` : ''}`;
-    const counts = {};
-    let matched = 0, total = 0;
-    $$('.tb-group', tb).forEach(g => {
-      let n = 0;
-      $$('.tool', g).forEach(a => {
-        const hit = !tbCo || a.dataset.jobs.split(' ').includes(tbCo);
-        a.classList.toggle('dim', !hit);
-        n += hit;
-      });
-      counts[g.dataset.cat] = n;
-      matched += n;
-      total += $$('.tool', g).length;
-      g.hidden = !!tbCat && g.dataset.cat !== tbCat;
+  function applyToolbox(co) {
+    $$('.tb-co', tb).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.co === co)));
+    tbGrid.className = `tb${co ? ` picking c-${co}` : ''}`;
+    const tools = $$('.tool', tb);
+    let matched = 0;
+    tools.forEach(a => {
+      const hit = !co || a.dataset.jobs.split(' ').includes(co);
+      a.classList.toggle('dim', !hit);
+      matched += hit;
     });
-    $$('.tb-cats .seg-btn', tb).forEach(b => {
-      const n = b.dataset.cat ? counts[b.dataset.cat] : matched;
-      $('.n', b).textContent = n;
-      b.classList.toggle('empty', !n);
-    });
-    tbStatus.textContent = tbCo ? `${matched} of ${total} tools used at ${companyOf[tbCo]}` : `All ${total} tools`;
+    tbCount.textContent = co ? `${matched} of ${tools.length} tools used at ${companyOf[co]}` : `All ${tools.length} tools`;
   }
-  $$('.tb-cats .seg-btn', tb).forEach(b => b.addEventListener('click', () => { tbCat = b.dataset.cat; applyToolbox(); }));
-  $$('.tb-co', tb).forEach(b => b.addEventListener('click', () => { tbCo = b.dataset.co; applyToolbox(); }));
+  $$('.tb-co', tb).forEach(b => b.addEventListener('click', () => applyToolbox(b.dataset.co)));
 
   /* ---------- Evidence drawer: #tool/…, #feature/…, #problem/… ---------- */
   const ROUTE = /^(tool|feature|problem)\/[\w-]+$/;
